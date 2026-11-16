@@ -1,8 +1,9 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  # account ID and Region make the name globally unique without committing them.
-  state_bucket_name = "${var.name_prefix}-tfstate-${data.aws_caller_identity.current.account_id}-${var.region}"
+  # account ID and Region make the name globally unique without committing them
+  account_id        = data.aws_caller_identity.current.account_id
+  state_bucket_name = "${var.name_prefix}-tfstate-${local.account_id}-${var.region}"
 }
 
 # remote state for every Terraform root module in the lab

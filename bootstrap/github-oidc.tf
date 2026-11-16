@@ -1,5 +1,5 @@
 # GitHub Actions authenticates with short-lived OIDC tokens: no stored AWS keys.
-# Two roles with different trust:
+# two roles with different trust:
 #   plan  -> pull requests (read-only + state lock)
 #   apply -> only jobs in the protected GitHub environment (required reviewer)
 
