@@ -101,8 +101,10 @@ jobs:
       fail-fast: false
       matrix:
         root: ${{ fromJSON(needs.checks.outputs.roots) }}
+    # job defaults replace the workflow defaults, so repeat the shell (pipefail)
     defaults:
       run:
+        shell: bash
         working-directory: ${{ matrix.root }}
     env:
       TF_VAR_account_email_base: ${{ secrets.ACCOUNT_EMAIL_BASE }}
@@ -154,8 +156,10 @@ jobs:
       max-parallel: 1
       matrix:
         root: ${{ fromJSON(needs.checks.outputs.roots) }}
+    # job defaults replace the workflow defaults, so repeat the shell (pipefail)
     defaults:
       run:
+        shell: bash
         working-directory: ${{ matrix.root }}
     env:
       TF_VAR_account_email_base: ${{ secrets.ACCOUNT_EMAIL_BASE }}
