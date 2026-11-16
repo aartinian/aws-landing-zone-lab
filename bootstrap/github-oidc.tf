@@ -9,10 +9,15 @@ resource "aws_iam_openid_connect_provider" "github" {
 }
 
 locals {
-  repo       = "${var.github_owner}/${var.github_repo}"
+  # GitHub sends immutable subject claims: owner and repo carry their numeric IDs,
+  # so a deleted and re-created repo with the same name cannot assume the roles
+  sub_prefix = join("", [
+    "repo:${var.github_owner}@${var.github_owner_id}",
+    "/${var.github_repo}@${var.github_repo_id}",
+  ])
   oidc_host  = "token.actions.githubusercontent.com"
-  plan_subs  = ["repo:${local.repo}:pull_request"]
-  apply_subs = ["repo:${local.repo}:environment:${var.github_apply_environment}"]
+  plan_subs  = ["${local.sub_prefix}:pull_request"]
+  apply_subs = ["${local.sub_prefix}:environment:${var.github_apply_environment}"]
   state_arn  = aws_s3_bucket.state.arn
 }
 

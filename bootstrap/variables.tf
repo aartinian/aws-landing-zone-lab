@@ -46,6 +46,26 @@ variable "github_repo" {
   type        = string
 }
 
+variable "github_owner_id" {
+  description = "Numeric ID of the GitHub owner (part of the immutable OIDC subject)."
+  type        = string
+
+  validation {
+    condition     = can(regex("^[0-9]+$", var.github_owner_id))
+    error_message = "Must be a numeric GitHub ID."
+  }
+}
+
+variable "github_repo_id" {
+  description = "Numeric ID of the lab repository (part of the immutable OIDC subject)."
+  type        = string
+
+  validation {
+    condition     = can(regex("^[0-9]+$", var.github_repo_id))
+    error_message = "Must be a numeric GitHub ID."
+  }
+}
+
 variable "github_apply_environment" {
   description = "GitHub environment allowed to assume the apply role (has a required reviewer)."
   type        = string
