@@ -9,9 +9,6 @@ import {
 resource "aws_organizations_organization" "this" {
   feature_set = "ALL"
 
-  # keep the account list (with emails) out of state and plan output
-  return_organization_only = true
-
   # trusted access for services that act across the organization
   aws_service_access_principals = [
     "account.amazonaws.com",                             # enable Regions in member accounts
