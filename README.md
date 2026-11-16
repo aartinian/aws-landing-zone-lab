@@ -25,8 +25,9 @@ Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev 
 | Path | Content | Status |
 |---|---|---|
 | `bootstrap/` | Budget, state bucket, GitHub OIDC roles. Applied manually once. | applied |
-| `modules/` | Reusable modules | planned |
-| `live/` | Root modules per component, one state key each | planned |
+| `modules/` | Reusable modules | in use |
+| `live/` | Root modules per component, one state key each | in use |
+| `workloads/` | Application code (Python), tested in the pipeline, deployed by `live/workload-*` | in use |
 | `.github/` | Pipeline: plan on PR, apply on merge with approval | ready |
 
 ## Pipeline
@@ -35,8 +36,8 @@ Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev 
 
 | Event | Role (OIDC, no keys) | Steps |
 |---|---|---|
-| Pull request | `awslab-github-plan`: read-only | `fmt`, `validate`, `plan` |
-| Merge to `master` | `awslab-github-apply`: admin, only in environment `prod` | waits for approval, then `plan` and `apply` |
+| Pull request | `awslab-github-plan`: read-only | `fmt`, ruff + pytest, `validate`, `plan` |
+| Merge to `master` | `awslab-github-apply`: admin, only in environment `prod` | tests pass, waits for approval, then `plan` and `apply` |
 
 - Logs are public: the management account ID and all member account IDs and emails are masked before Terraform runs. Plans are not posted as PR comments.
 - Actions are pinned to commit SHAs; Dependabot updates them weekly.
