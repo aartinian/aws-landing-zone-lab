@@ -8,9 +8,9 @@
 name: terraform
 
 on:
+  # every PR, so the required checks always report (no paths filter)
   pull_request:
     branches: [master]
-    paths: ["live/**", "modules/**", ".github/**"]
   push:
     branches: [master]
     paths: ["live/**", "modules/**", ".github/**"]
