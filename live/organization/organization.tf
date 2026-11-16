@@ -12,6 +12,7 @@ resource "aws_organizations_organization" "this" {
   # trusted access for services that act across the organization
   aws_service_access_principals = [
     "account.amazonaws.com",                             # enable Regions in member accounts
+    "cloudtrail.amazonaws.com",                          # organization trail (live/logging)
     "member.org.stacksets.cloudformation.amazonaws.com", # StackSets, activated by hand
     "sso.amazonaws.com",                                 # IAM Identity Center, enabled by hand
   ]
