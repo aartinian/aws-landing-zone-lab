@@ -31,9 +31,9 @@ runs:
         role-session-name: gha-${{ github.run_id }}
         mask-aws-account-id: true
 
-    # logs of a public repo are public: hide account IDs and emails, the
-    # management account name, and the organization and root IDs before
-    # Terraform prints anything
+    # logs of a public repo are public: hide account IDs and emails and the
+    # organization and root IDs before Terraform prints anything.
+    # The management account name is not masked: keep it neutral (e.g. "management").
     - name: Mask organization data
       shell: bash
       run: |
@@ -42,16 +42,9 @@ runs:
             --query 'Accounts[].[Id,Email]' \
             --output text
         )
-        org=$(
+        org_id=$(
           aws organizations describe-organization \
-            --query 'Organization.[Id,MasterAccountId]' \
-            --output text
-        )
-        read -r org_id mgmt_id <<< "${org}"
-        mgmt_name=$(
-          aws organizations describe-account \
-            --account-id "${mgmt_id}" \
-            --query 'Account.Name' \
+            --query 'Organization.Id' \
             --output text
         )
         root_id=$(
@@ -63,8 +56,6 @@ runs:
         for value in ${accounts} "${org_id}" "${root_id}"; do
           echo "::add-mask::${value}"
         done
-        # the name may contain spaces, mask it as one value
-        echo "::add-mask::${mgmt_name}"
 
     - name: terraform init
       shell: bash
