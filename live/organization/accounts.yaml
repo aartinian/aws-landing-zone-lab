@@ -1,0 +1,29 @@
+# account vending: one entry per member account
+#   ou:                  Security | Workloads | Sandbox | Suspended
+#   owner:               team responsible for the account
+#   env:                 dev | prod
+#   data-classification: public | internal | confidential (ISG)
+
+log-archive:
+  ou: Security
+  owner: platform
+  env: prod
+  data-classification: internal
+
+security-tooling:
+  ou: Security
+  owner: platform
+  env: prod
+  data-classification: internal
+
+workload-dev:
+  ou: Workloads
+  owner: weather-data
+  env: dev
+  data-classification: public
+
+workload-prod:
+  ou: Workloads
+  owner: weather-data
+  env: prod
+  data-classification: public

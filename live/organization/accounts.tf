@@ -1,10 +1,6 @@
 locals {
-  accounts = {
-    log-archive      = "Security"
-    security-tooling = "Security"
-    workload-dev     = "Workloads"
-    workload-prod    = "Workloads"
-  }
+  # account name -> { ou, owner, env, data-classification }
+  accounts = yamldecode(file("${path.module}/accounts.yaml"))
 
   # you@example.com -> you+<account>@example.com
   email_parts = split("@", var.account_email_base)
@@ -15,7 +11,14 @@ resource "aws_organizations_account" "this" {
 
   name      = each.key
   email     = "${local.email_parts[0]}+${each.key}@${local.email_parts[1]}"
-  parent_id = aws_organizations_organizational_unit.this[each.value].id
+  parent_id = aws_organizations_organizational_unit.this[each.value.ou].id
+
+  # account-level tags override the provider default tags with the same key
+  tags = {
+    owner               = each.value.owner
+    env                 = each.value.env
+    data-classification = each.value["data-classification"]
+  }
 
   # admin role in the new account, assumable from the management account
   role_name = "OrganizationAccountAccessRole"
@@ -24,6 +27,18 @@ resource "aws_organizations_account" "this" {
   close_on_deletion = true
 
   lifecycle {
+    precondition {
+      condition     = contains(["dev", "prod"], each.value.env)
+      error_message = "${each.key}: env must be dev or prod."
+    }
+    precondition {
+      condition = contains(
+        ["public", "internal", "confidential"],
+        each.value["data-classification"],
+      )
+      error_message = "${each.key}: data-classification must be public, internal or confidential."
+    }
+
     # closing an account is slow to undo (90-day post-closure period).
     # Remove this deliberately during teardown.
     prevent_destroy = true
