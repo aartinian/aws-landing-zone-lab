@@ -6,6 +6,6 @@ Root modules, one state key each (`<component>/terraform.tfstate` in the bootstr
 |---|---|---|
 | `organization` | management | Organization (imported), OUs, 4 accounts, Zurich enabled per account |
 | `guardrails` | management | SCPs: baseline + Region restriction (root), deny-all (Suspended); tag policy later |
-| `identity` | management | Identity Center permission sets and assignments |
+| `identity` | management | Identity Center: 4 groups, 3 permission sets, assignments, demo user |
 | `logging` | management + log-archive | Organization CloudTrail, log bucket |
 | `workload-dev`, `workload-prod` | workload accounts | Open-data Lambda |
