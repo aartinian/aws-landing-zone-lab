@@ -1,0 +1,154 @@
+# Terraform workflow for managing infrastructure with GitHub Actions
+# Pull request    -> fmt, validate, plan (read-only role)
+# Merge to master -> plan + apply (admin role), only after approval in
+#                    the GitHub environment "prod"
+#
+# note: bootstrap/ is not part of the pipeline: it is applied by hand.
+
+name: terraform
+
+on:
+  pull_request:
+    branches: [master]
+    paths: ["live/**", "modules/**", ".github/**"]
+  push:
+    branches: [master]
+    paths: ["live/**", "modules/**", ".github/**"]
+
+permissions:
+  contents: read
+
+# One run at a time per branch; never cancel a running Terraform (state lock).
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: eu-central-2
+  TF_VERSION: 1.16.4
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    outputs:
+      roots: ${{ steps.roots.outputs.roots }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff
+
+      # Every directory live/<component> with .tf files is a root module.
+      - name: Find root modules
+        id: roots
+        run: |
+          roots=$(find live -mindepth 2 -maxdepth 2 -name '*.tf' -exec dirname {} \; | sort -u | jq -Rnc '[inputs]')
+          echo "roots=$roots" >> "$GITHUB_OUTPUT"
+          echo "Root modules: $roots"
+
+  # Proves on every pull request that GitHub can assume the plan role,
+  # even when there is no root module to plan yet.
+  oidc:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ secrets.AWS_PLAN_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: gha-${{ github.run_id }}
+          mask-aws-account-id: true
+      - run: aws sts get-caller-identity --query Arn --output text
+
+  plan:
+    name: plan (${{ matrix.root }})
+    needs: checks
+    # Fork PRs get no OIDC token; skip instead of failing.
+    if: >-
+      github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && needs.checks.outputs.roots != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        root: ${{ fromJSON(needs.checks.outputs.roots) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/tf-init
+        with:
+          root: ${{ matrix.root }}
+          role-arn: ${{ secrets.AWS_PLAN_ROLE_ARN }}
+          state-bucket: ${{ secrets.TF_STATE_BUCKET }}
+
+      - name: terraform validate
+        working-directory: ${{ matrix.root }}
+        run: terraform validate -no-color
+
+      - name: terraform plan
+        working-directory: ${{ matrix.root }}
+        run: terraform plan -no-color -lock-timeout=2m -out=tfplan
+
+      # Only the summary line: job summaries and PR comments are not a place for
+      # full plans in a public repo. The full plan is in the (masked) job log.
+      - name: Summary
+        working-directory: ${{ matrix.root }}
+        run: |
+          echo "**${{ matrix.root }}**: $(terraform show -no-color tfplan | grep -E '^(Plan:|No changes)')" >> "$GITHUB_STEP_SUMMARY"
+
+  apply:
+    name: apply (${{ matrix.root }})
+    needs: checks
+    if: github.event_name == 'push' && needs.checks.outputs.roots != '[]'
+    runs-on: ubuntu-latest
+    # Required reviewer: the job waits here until approved.
+    environment: prod
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: true
+      max-parallel: 1
+      matrix:
+        root: ${{ fromJSON(needs.checks.outputs.roots) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/tf-init
+        with:
+          root: ${{ matrix.root }}
+          role-arn: ${{ secrets.AWS_APPLY_ROLE_ARN }}
+          state-bucket: ${{ secrets.TF_STATE_BUCKET }}
+
+      - name: terraform plan
+        working-directory: ${{ matrix.root }}
+        run: terraform plan -no-color -lock-timeout=2m -out=tfplan
+
+      - name: terraform apply
+        working-directory: ${{ matrix.root }}
+        run: terraform apply -no-color -lock-timeout=2m tfplan
+
+      - name: Summary
+        working-directory: ${{ matrix.root }}
+        run: |
+          echo "**${{ matrix.root }}**: applied" >> "$GITHUB_STEP_SUMMARY"
