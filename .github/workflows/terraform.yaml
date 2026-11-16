@@ -1,4 +1,5 @@
 # terraform workflow for the root modules in live/
+#   always          -> fmt, Python lint and tests of the workloads
 #   pull request    -> fmt, validate, plan (read-only role)
 #   merge to master -> plan + apply (admin role), only after approval in
 #                      the GitHub environment "prod"
@@ -13,7 +14,7 @@ on:
     branches: [master]
   push:
     branches: [master]
-    paths: ["live/**", "modules/**", ".github/**"]
+    paths: ["live/**", "modules/**", "workloads/**", ".github/**"]
 
 permissions:
   contents: read
@@ -63,6 +64,36 @@ jobs:
           )
           echo "roots=${roots}" >> "$GITHUB_OUTPUT"
           echo "root modules: ${roots}"
+
+  # Lambda code: lint, format and unit tests (no AWS access needed)
+  python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: workloads/weather-ingest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      # dev tools are pinned in pyproject.toml ([dependency-groups], needs pip >= 25.1)
+      - name: Install dev tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --group dev
+
+      - name: ruff
+        run: |
+          ruff check --output-format=github .
+          ruff format --check .
+
+      - name: pytest
+        run: pytest -q
 
   # proves on every pull request that GitHub can assume the plan role,
   # even when there is no root module to plan yet
@@ -148,7 +179,8 @@ jobs:
 
   apply:
     name: apply (${{ matrix.root }})
-    needs: checks
+    # never deploy Lambda code that fails its tests
+    needs: [checks, python]
     if: github.event_name == 'push' && needs.checks.outputs.roots != '[]'
     runs-on: ubuntu-latest
     # required reviewer: the job waits here until approved
