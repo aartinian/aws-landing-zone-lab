@@ -1,7 +1,13 @@
-# keeps the SHA-pinned actions up to date (weekly pull requests)
+# keeps the SHA-pinned actions and the Python dev tools up to date (weekly pull requests)
 version: 2
 updates:
   - package-ecosystem: github-actions
     directories: ["/", "/.github/actions/tf-init"]
+    schedule:
+      interval: weekly
+
+  # pyproject.toml and uv.lock of the Lambda
+  - package-ecosystem: uv
+    directory: /workloads/weather-ingest
     schedule:
       interval: weekly

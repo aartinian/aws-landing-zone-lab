@@ -1,0 +1,23 @@
+[project]
+name = "weather-ingest"
+version = "0.1.0"
+description = "Daily ingest of MeteoSwiss SwissMetNet open data into S3"
+requires-python = ">=3.12"
+
+[dependency-groups]
+dev = ["pytest==9.2.0", "ruff==0.17.5"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"] # assert is how pytest checks
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
