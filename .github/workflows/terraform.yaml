@@ -122,11 +122,13 @@ jobs:
       - name: terraform validate
         run: terraform validate -no-color
 
-      # new account IDs are not known to the masking step, so hide all 12-digit numbers
+      # new IDs are not known to the masking step: hide all account and OU IDs by pattern
       - name: terraform plan
         run: |
           terraform plan -no-color -lock-timeout=2m -out=tfplan \
-            | sed -E 's/[0-9]{12}/<account-id>/g'
+            | sed -E \
+                -e 's/[0-9]{12}/<account-id>/g' \
+                -e 's/ou-[a-z0-9]{4,32}-[a-z0-9]{8,32}/<ou-id>/g'
 
       # only the summary line, the full plan stays in the masked job log
       # (summaries and PR comments are not masked)
@@ -177,12 +179,16 @@ jobs:
       - name: terraform plan
         run: |
           terraform plan -no-color -lock-timeout=2m -out=tfplan \
-            | sed -E 's/[0-9]{12}/<account-id>/g'
+            | sed -E \
+                -e 's/[0-9]{12}/<account-id>/g' \
+                -e 's/ou-[a-z0-9]{4,32}-[a-z0-9]{8,32}/<ou-id>/g'
 
       - name: terraform apply
         run: |
           terraform apply -no-color -lock-timeout=2m tfplan \
-            | sed -E 's/[0-9]{12}/<account-id>/g'
+            | sed -E \
+                -e 's/[0-9]{12}/<account-id>/g' \
+                -e 's/ou-[a-z0-9]{4,32}-[a-z0-9]{8,32}/<ou-id>/g'
 
       - name: Summary
         env:
