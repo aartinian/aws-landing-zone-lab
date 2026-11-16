@@ -1,9 +1,8 @@
 # modules
 
-Planned, added step by step:
+Reusable modules, added step by step:
 
-| Module | Purpose |
-|---|---|
-| `account-baseline` | Per-account defaults: S3 Block Public Access, EBS encryption, IAM password policy, Zurich enablement |
-| `scp` | Service control policies from JSON files |
-| `workload` | MeteoSwiss open-data Lambda (Python) |
+| Module | Purpose | Used by |
+|---|---|---|
+| `account-baseline` | Per-account defaults: S3 Block Public Access, EBS default encryption, budget | `live/account-baseline` |
+| `workload` (planned) | MeteoSwiss open-data Lambda (Python) | `live/workload-*` |
