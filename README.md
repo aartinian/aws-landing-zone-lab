@@ -31,7 +31,7 @@ Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev 
 
 ## Pipeline
 
-[`.github/workflows/terraform.yml`](.github/workflows/terraform.yml), for every root module in `live/<component>/`:
+[`.github/workflows/terraform.yaml`](.github/workflows/terraform.yaml), for every root module in `live/<component>/`:
 
 | Event | Role (OIDC, no keys) | Steps |
 |---|---|---|
@@ -48,6 +48,14 @@ Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev 
 - Required tags: `project`, `env`, `owner`, `data-classification`, `managed-by`.
 - No account IDs, emails or state in Git: real values live in git-ignored `*.tfvars` / `backend.hcl` and in GitHub secrets.
 - Costs: target < 5 USD/month; budget alert from day one.
+
+## Code style
+
+- **Comments** start lowercase (names and acronyms keep their case: AWS, GitHub, `use_lockfile`). A single sentence has no final period; several sentences each end with one.
+- **Descriptions** (`description = "..."` in Terraform) are user-facing text: normal sentences.
+- **Line length** 100 for `.tf`, `.yaml`, shell and Python. Exceptions: SHA-pinned `uses:` lines, URLs, ARNs.
+- **Long commands** go one option per line with `\`, in a `run: |` block. Long HCL expressions move into `locals`.
+- `.editorconfig` sets the ruler; `terraform fmt` and `actionlint` run before every commit.
 
 ## Teardown
 

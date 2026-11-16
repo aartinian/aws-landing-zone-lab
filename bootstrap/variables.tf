@@ -1,5 +1,5 @@
 variable "region" {
-  description = "Home Region of the lab. Zurich is an opt-in Region: enable it in the account first."
+  description = "Home Region of the lab. Zurich is opt-in: enable it in the account first."
   type        = string
   default     = "eu-central-2"
 }
@@ -21,7 +21,7 @@ variable "name_prefix" {
 }
 
 variable "monthly_budget_usd" {
-  description = "Monthly cost budget for the whole organization (the payer account sees all member accounts)."
+  description = "Monthly cost budget in USD. In the payer account it covers all member accounts."
   type        = number
   default     = 5
 }
@@ -47,7 +47,7 @@ variable "github_repo" {
 }
 
 variable "github_apply_environment" {
-  description = "GitHub environment whose jobs may assume the apply role (protected by a required reviewer)."
+  description = "GitHub environment allowed to assume the apply role (has a required reviewer)."
   type        = string
   default     = "prod"
 }
