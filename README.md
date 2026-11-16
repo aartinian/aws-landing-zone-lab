@@ -63,7 +63,9 @@ Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev 
 Reverse order of creation. Filled in as components are added.
 
 1. Workloads: `terraform destroy` per `live/` component (prod, then dev).
-2. Security services and organization CloudTrail.
+2. Security services and organization CloudTrail (`live/logging`):
+   - Destroy the trail first, so no new log files arrive.
+   - The log bucket has Object Lock (governance) and `prevent_destroy`. Either wait until the last lock expires (30 days), or delete all object versions as admin with `--bypass-governance-retention`. Then remove `prevent_destroy` and destroy the bucket.
 3. Identity Center assignments and permission sets.
 4. SCPs and tag policies (detach, then delete).
 5. Member accounts: close via Organizations (90-day post-closure period; they count against the account quota until then).
