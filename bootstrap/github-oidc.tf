@@ -97,3 +97,18 @@ resource "aws_iam_role_policy_attachment" "apply_admin" {
   role       = aws_iam_role.apply.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
+
+# plan in member accounts: assume the read-only role the organization StackSet deploys there
+data "aws_iam_policy_document" "plan_members" {
+  statement {
+    sid       = "AssumeMemberPlanRole"
+    actions   = ["sts:AssumeRole"]
+    resources = ["arn:aws:iam::*:role/${var.name_prefix}-terraform-plan"]
+  }
+}
+
+resource "aws_iam_role_policy" "plan_members" {
+  name   = "assume-member-plan-role"
+  role   = aws_iam_role.plan.id
+  policy = data.aws_iam_policy_document.plan_members.json
+}

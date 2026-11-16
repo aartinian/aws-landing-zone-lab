@@ -12,3 +12,7 @@ output "account_ids" {
   value     = { for name, account in aws_organizations_account.this : name => account.id }
   sensitive = true
 }
+
+output "member_plan_role_name" {
+  value = local.member_plan_role_name
+}
