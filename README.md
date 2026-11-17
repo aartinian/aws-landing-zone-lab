@@ -8,7 +8,8 @@ A small, multi-account AWS landing zone built with Terraform and GitHub Actions,
 Organization (management account: billing, Organizations, Identity Center)
 ├── Security OU
 │   ├── log-archive        org CloudTrail, Config, access logs
-│   └── security-tooling   delegated admin: GuardDuty, Security Hub, IAM Access Analyzer
+│   └── security-tooling   delegated admin: GuardDuty, Security Hub, IAM Access Analyzer;
+│                          high-severity findings by email
 ├── Workloads OU
 │   ├── workload-dev
 │   └── workload-prod
@@ -16,7 +17,7 @@ Organization (management account: billing, Organizations, Identity Center)
 └── Suspended OU           empty; quarantine for closed accounts
 ```
 
-Guardrails: Zurich-only region SCP (global services exempt), deny leaving the organization, deny root user, protect security services, tag policy.
+Guardrails: Zurich-only region SCP (global services exempt), deny leaving the organization, deny root user (short AssumeRoot task sessions from the management account excepted), protect security services, tag policy.
 
 Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev → prod through the pipeline.
 
@@ -28,6 +29,7 @@ Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev 
 | `modules/` | Reusable modules | in use |
 | `live/` | Root modules per component, one state key each | in use |
 | `workloads/` | Application code (Python), tested in the pipeline, deployed by `live/workload-*` | in use |
+| `tools/` | Operations tools, e.g. [`org-inventory`](#organization-inventory) (Python, tested in the pipeline) | in use |
 | `.github/` | Pipeline: plan on PR, apply on merge with approval | ready |
 
 ## Pipeline
@@ -44,6 +46,29 @@ Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev 
 - Static checks: [`.tflint.hcl`](.tflint.hcl) (Terraform and AWS rules) and [`.checkov.yaml`](.checkov.yaml) (security checks; `skip-check` is the list of accepted risks, each with its reason).
 - Tag policy compliance: `TF_AWS_TAG_POLICY_COMPLIANCE=error` makes plan and apply fail if a resource misses a tag that the organization tag policy requires. The plan roles need `tag:ListRequiredTags`, which `ReadOnlyAccess` does not include.
 - `bootstrap/` is applied by hand and not part of the pipeline.
+
+## Organization inventory
+
+`tools/org-inventory` checks every member account against the baseline and prints a Markdown table: OU and tags as in `accounts.yaml`, tag values from `tagging.yaml`, Zurich enabled, S3 Block Public Access, a budget, GuardDuty and Security Hub membership. Accounts in the organization but not in `accounts.yaml` are reported as drift. Read-only; exit code 1 if a check fails.
+
+```bash
+cd tools/org-inventory
+uv run org-inventory --profile <management-profile> --output report.md
+```
+
+## Not built yet
+
+Planned next steps, with the design decided:
+
+| Topic | Plan |
+|---|---|
+| Inventory on a schedule | Run `org-inventory` weekly in GitHub Actions and write the report as job summary. Needs its own read-only OIDC role: the plan role only trusts pull requests. |
+| Root credentials of existing accounts | Centralized root access is on, new accounts get no root credentials. Delete those of the existing members once with an `IAMDeleteRootUserCredentials` root session. |
+| Fix after alert | Alerts go to email today. Next: a runbook per alert type, and fixes through the shared modules (e.g. KMS for the CloudTrail bucket, Security Hub CloudTrail.2). |
+| Break-glass access | An IAM user with hardware MFA in the management account for when Identity Center is down, credentials kept offline, every sign-in alerts through the security topic. |
+| Cost Anomaly Detection | A monitor per linked account with an email subscription, on top of the budgets. Free. |
+| Resource control policy (RCP) | S3 only for principals of the organization. AWS service principals stay exempt (`aws:PrincipalIsAWSService`), otherwise CloudTrail and Config delivery break. Rollout on the Sandbox OU first. |
+| Well-Architected review | Review of the weather-ingest workload, saved as a milestone. The tool is not in Zurich: it runs in eu-central-1 and stores only review answers (see Conventions). |
 
 ## Conventions
 
@@ -65,13 +90,13 @@ Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev 
 Reverse order of creation. Filled in as components are added.
 
 1. Workloads: `terraform destroy` per `live/` component (prod, then dev).
-2. Security services (`live/security`): `terraform destroy` disables Security Hub, Config and the GuardDuty admin. Member detectors created by GuardDuty auto-enable stay: delete them in each member account (`aws guardduty delete-detector`), they are not in the state (the management detector is).
+2. Security services (`live/security`): `terraform destroy` disables Security Hub, Config, IAM Access Analyzer, the alert topic and the GuardDuty admin. Member detectors created by GuardDuty auto-enable stay: delete them in each member account (`aws guardduty delete-detector`), they are not in the state (the management detector is).
 3. Organization CloudTrail and log buckets (`live/logging`):
    - Destroy the trail first, so no new log files arrive.
    - The Config bucket has `prevent_destroy`: empty it (all versions), remove the flag, destroy.
    - The log bucket has Object Lock (governance) and `prevent_destroy`. Either wait until the last lock expires (30 days), or delete all object versions as admin with `--bypass-governance-retention`. Then remove `prevent_destroy` and destroy the bucket.
 4. Identity Center assignments and permission sets.
-5. SCPs and tag policies (detach, then delete).
+5. SCPs and tag policies (detach, then delete). Centralized root access: destroy `aws_iam_organizations_features` before the trusted access for IAM is removed.
 6. Member accounts: close via Organizations (90-day post-closure period; they count against the account quota until then).
 7. Bootstrap:
    - Empty the state bucket, **including all object versions and delete markers**.
