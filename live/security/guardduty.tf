@@ -35,6 +35,12 @@ locals {
   guardduty_members = local.securityhub_members
 }
 
+# the management account must enable GuardDuty itself before it can be added as a member;
+# the other accounts get their detector from the administrator
+resource "aws_guardduty_detector" "management" {
+  enable = true
+}
+
 # existing organization accounts: CreateMembers without an invitation, then auto-enable applies
 resource "aws_guardduty_member" "this" {
   for_each = local.guardduty_members
@@ -45,7 +51,10 @@ resource "aws_guardduty_member" "this" {
   email       = local.account_emails[each.value]
   invite      = false
 
-  depends_on = [aws_guardduty_organization_configuration.this]
+  depends_on = [
+    aws_guardduty_organization_configuration.this,
+    aws_guardduty_detector.management,
+  ]
 
   lifecycle {
     # the provider reads an enabled organization member as invite = true: no permanent diff

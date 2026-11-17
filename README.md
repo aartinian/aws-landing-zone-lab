@@ -65,7 +65,7 @@ Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev 
 Reverse order of creation. Filled in as components are added.
 
 1. Workloads: `terraform destroy` per `live/` component (prod, then dev).
-2. Security services (`live/security`): `terraform destroy` disables Security Hub, Config and the GuardDuty admin. Member detectors created by GuardDuty auto-enable stay: delete them in each account (`aws guardduty delete-detector`), they are not in the state.
+2. Security services (`live/security`): `terraform destroy` disables Security Hub, Config and the GuardDuty admin. Member detectors created by GuardDuty auto-enable stay: delete them in each member account (`aws guardduty delete-detector`), they are not in the state (the management detector is).
 3. Organization CloudTrail and log buckets (`live/logging`):
    - Destroy the trail first, so no new log files arrive.
    - The Config bucket has `prevent_destroy`: empty it (all versions), remove the flag, destroy.
