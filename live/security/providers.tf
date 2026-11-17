@@ -4,7 +4,11 @@ provider "aws" {
   region = var.region
 
   default_tags {
-    tags = merge(local.common_tags, { env = "management", owner = "platform" })
+    tags = merge(local.common_tags, {
+      env                 = "management"
+      owner               = "platform"
+      data-classification = "internal"
+    })
   }
 }
 
