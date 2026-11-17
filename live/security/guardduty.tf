@@ -14,7 +14,8 @@ resource "aws_guardduty_organization_admin_account" "this" {
   depends_on = [aws_guardduty_detector.admin]
 }
 
-# ALL: existing and new accounts, GuardDuty manages their detectors (no Terraform per member)
+# ALL: GuardDuty creates and configures the detectors of member accounts. It only applies to
+# accounts that are already members: existing accounts must be added once (see below).
 resource "aws_guardduty_organization_configuration" "this" {
   provider = aws.security_tooling
 
@@ -22,6 +23,34 @@ resource "aws_guardduty_organization_configuration" "this" {
   auto_enable_organization_members = "ALL"
 
   depends_on = [aws_guardduty_organization_admin_account.this]
+}
+
+locals {
+  account_emails = {
+    for account in data.aws_organizations_organization.this.accounts :
+    account.id => account.email
+  }
+
+  # every account except the admin itself, management included
+  guardduty_members = local.securityhub_members
+}
+
+# existing organization accounts: CreateMembers without an invitation, then auto-enable applies
+resource "aws_guardduty_member" "this" {
+  for_each = local.guardduty_members
+  provider = aws.security_tooling
+
+  detector_id = aws_guardduty_detector.admin.id
+  account_id  = each.value
+  email       = local.account_emails[each.value]
+  invite      = false
+
+  depends_on = [aws_guardduty_organization_configuration.this]
+
+  lifecycle {
+    # the provider reads an enabled organization member as invite = true: no permanent diff
+    ignore_changes = [invite]
+  }
 }
 
 locals {
