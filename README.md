@@ -63,13 +63,15 @@ Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev 
 Reverse order of creation. Filled in as components are added.
 
 1. Workloads: `terraform destroy` per `live/` component (prod, then dev).
-2. Security services and organization CloudTrail (`live/logging`):
+2. Security services (`live/security`): `terraform destroy` disables Security Hub, Config and the GuardDuty admin. Member detectors created by GuardDuty auto-enable stay: delete them in each account (`aws guardduty delete-detector`), they are not in the state.
+3. Organization CloudTrail and log buckets (`live/logging`):
    - Destroy the trail first, so no new log files arrive.
+   - The Config bucket has `prevent_destroy`: empty it (all versions), remove the flag, destroy.
    - The log bucket has Object Lock (governance) and `prevent_destroy`. Either wait until the last lock expires (30 days), or delete all object versions as admin with `--bypass-governance-retention`. Then remove `prevent_destroy` and destroy the bucket.
-3. Identity Center assignments and permission sets.
-4. SCPs and tag policies (detach, then delete).
-5. Member accounts: close via Organizations (90-day post-closure period; they count against the account quota until then).
-6. Bootstrap:
+4. Identity Center assignments and permission sets.
+5. SCPs and tag policies (detach, then delete).
+6. Member accounts: close via Organizations (90-day post-closure period; they count against the account quota until then).
+7. Bootstrap:
    - Empty the state bucket, **including all object versions and delete markers**.
    - Remove `prevent_destroy` from `aws_s3_bucket.state`, migrate state back to local (`terraform init -migrate-state` with the backend block commented out), then `terraform destroy`.
-7. Check Cost Explorer and the Billing console the next day for leftovers.
+8. Check Cost Explorer and the Billing console the next day for leftovers.

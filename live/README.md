@@ -8,5 +8,6 @@ Root modules, one state key each (`<component>/terraform.tfstate` in the bootstr
 | `account-baseline` | each member account | `modules/account-baseline` per account: Block Public Access, EBS encryption, budget |
 | `guardrails` | management | SCPs: baseline + Region restriction (root), deny-all (Suspended); tag policy later |
 | `identity` | management | Identity Center: 4 groups, 3 permission sets, assignments, demo user |
-| `logging` | management + log-archive | Organization trail (all accounts, all Regions, log file validation) → bucket in log-archive: Object Lock (governance, 30 days), versioned, 365-day expiry. Needs CloudTrail trusted access from `organization` |
+| `logging` | management + log-archive | Organization trail (all accounts, all Regions, log file validation) → bucket in log-archive: Object Lock (governance, 30 days), versioned, 365-day expiry. Needs CloudTrail trusted access from `organization`. Config bucket for all accounts |
+| `security` | management + all members | GuardDuty and Security Hub CSPM, delegated admin in security-tooling. `modules/security-baseline` per account: Config recorder (service-linked role) + Security Hub with FSBP only |
 | `workload-dev`, `workload-prod` | workload accounts | `modules/weather-ingest`: dev ingests 1 station, prod 6. Applied in order dev → prod; prod is skipped if dev fails |
