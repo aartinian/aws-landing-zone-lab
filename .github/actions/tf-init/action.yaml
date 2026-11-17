@@ -1,12 +1,15 @@
 name: terraform init
 description: >-
   Install Terraform, assume an AWS role via OIDC, mask account data
-  and init one root module.
+  and init one root module (if given).
 
 inputs:
   root:
-    description: root module directory, e.g. live/organization.
-    required: true
+    description: >-
+      Root module directory, e.g. live/organization. Empty: no init
+      (the apply job inits each root itself).
+    required: false
+    default: ""
   role-arn:
     description: IAM role to assume (plan or apply role).
     required: true
@@ -58,6 +61,7 @@ runs:
         done
 
     - name: terraform init
+      if: inputs.root != ''
       shell: bash
       working-directory: ${{ inputs.root }}
       env:
