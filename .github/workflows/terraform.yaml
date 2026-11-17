@@ -35,6 +35,10 @@ env:
   TF_IN_AUTOMATION: "true"
   TF_INPUT: "false"
   TFLINT_VERSION: v0.66.0
+  # the provider reads the required tags from the organization tag policy and fails plan and
+  # apply if a resource misses one (live/guardrails/tag-policy.tf). Plan and apply roles
+  # need tag:ListRequiredTags.
+  TF_AWS_TAG_POLICY_COMPLIANCE: error
 
 jobs:
   checks:
