@@ -42,7 +42,7 @@ Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev 
 - Logs are public: the management account ID and all member account IDs and emails are masked before Terraform runs. Plans are not posted as PR comments.
 - Actions are pinned to commit SHAs; Dependabot updates them weekly.
 - Static checks: [`.tflint.hcl`](.tflint.hcl) (Terraform and AWS rules) and [`.checkov.yaml`](.checkov.yaml) (security checks; `skip-check` is the list of accepted risks, each with its reason).
-- Tag policy compliance: `TF_AWS_TAG_POLICY_COMPLIANCE=error` makes plan and apply fail if a resource misses a tag that the organization tag policy requires.
+- Tag policy compliance: `TF_AWS_TAG_POLICY_COMPLIANCE=error` makes apply fail if a resource misses a tag that the organization tag policy requires (plans follow once the plan roles can read the required tags).
 - `bootstrap/` is applied by hand and not part of the pipeline.
 
 ## Conventions
