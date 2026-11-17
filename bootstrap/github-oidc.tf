@@ -107,6 +107,14 @@ data "aws_iam_policy_document" "plan_members" {
     actions   = ["sts:AssumeRole"]
     resources = ["arn:aws:iam::*:role/${var.name_prefix}-terraform-plan"]
   }
+
+  # the provider reads the required tags of the tag policy (TF_AWS_TAG_POLICY_COMPLIANCE);
+  # not part of ReadOnlyAccess
+  statement {
+    sid       = "ListRequiredTags"
+    actions   = ["tag:ListRequiredTags"]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role_policy" "plan_members" {

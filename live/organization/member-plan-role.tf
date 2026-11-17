@@ -23,6 +23,18 @@ locals {
           RoleName           = local.member_plan_role_name
           MaxSessionDuration = 3600
           ManagedPolicyArns  = ["arn:aws:iam::aws:policy/ReadOnlyAccess"]
+          # tag policy compliance check of the provider, not part of ReadOnlyAccess
+          Policies = [{
+            PolicyName = "list-required-tags"
+            PolicyDocument = {
+              Version = "2012-10-17"
+              Statement = [{
+                Effect   = "Allow"
+                Action   = "tag:ListRequiredTags"
+                Resource = "*"
+              }]
+            }
+          }]
           AssumeRolePolicyDocument = {
             Version = "2012-10-17"
             Statement = [{
