@@ -6,9 +6,9 @@ updates:
     schedule:
       interval: weekly
 
-  # pyproject.toml and uv.lock of the Lambda
+  # pyproject.toml and uv.lock of the Lambda and the inventory tool
   - package-ecosystem: uv
-    directory: /workloads/weather-ingest
+    directories: ["/workloads/weather-ingest", "/tools/org-inventory"]
     schedule:
       interval: weekly
 

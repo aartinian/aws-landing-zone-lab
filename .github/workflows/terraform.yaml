@@ -100,13 +100,17 @@ jobs:
           python -m pip install -r .github/lint/requirements.txt
           checkov --config-file .checkov.yaml
 
-  # Lambda code: lint, format and unit tests (no AWS access needed)
+  # Python projects: lint, format and unit tests (no AWS access needed)
   python:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [workloads/weather-ingest, tools/org-inventory]
     defaults:
       run:
         shell: bash
-        working-directory: workloads/weather-ingest
+        working-directory: ${{ matrix.project }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
