@@ -12,6 +12,13 @@ resource "aws_securityhub_standards_subscription" "fsbp" {
     "standards/aws-foundational-security-best-practices/v/1.0.0",
   ])
 
+  # the first subscription in a new account sets up ~200 controls and can take longer
+  # than the provider default (3 minutes)
+  timeouts {
+    create = "15m"
+    delete = "15m"
+  }
+
   # controls need the recorder; without it they report "no data"
   depends_on = [aws_securityhub_account.this, aws_config_configuration_recorder_status.this]
 }
