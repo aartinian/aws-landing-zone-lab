@@ -2,6 +2,9 @@ locals {
   # account name -> { ou, owner, env, data-classification }
   accounts = yamldecode(file("${path.module}/accounts.yaml"))
 
+  # allowed tag values (same file as the tag policy in live/guardrails)
+  allowed = yamldecode(file("${path.module}/tagging.yaml")).tags
+
   # you@example.com -> you+<account>@example.com
   email_parts = split("@", var.account_email_base)
 }
@@ -33,10 +36,17 @@ resource "aws_organizations_account" "this" {
     }
     precondition {
       condition = contains(
-        ["public", "internal", "confidential"],
+        local.allowed["data-classification"],
         each.value["data-classification"],
       )
-      error_message = "${each.key}: data-classification must be public, internal or confidential."
+      error_message = join("", [
+        "${each.key}: data-classification must be one of ",
+        "${join(", ", local.allowed["data-classification"])} (tagging.yaml).",
+      ])
+    }
+    precondition {
+      condition     = contains(local.allowed.owner, each.value.owner)
+      error_message = "${each.key}: owner must be one of ${join(", ", local.allowed.owner)}."
     }
 
     # closing an account is slow to undo (90-day post-closure period).
