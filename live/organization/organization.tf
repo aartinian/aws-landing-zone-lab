@@ -13,7 +13,9 @@ resource "aws_organizations_organization" "this" {
   aws_service_access_principals = [
     "account.amazonaws.com",                             # enable Regions in member accounts
     "cloudtrail.amazonaws.com",                          # organization trail (live/logging)
+    "guardduty.amazonaws.com",                           # GuardDuty, admin in security-tooling
     "member.org.stacksets.cloudformation.amazonaws.com", # StackSets, activated by hand
+    "securityhub.amazonaws.com",                         # Security Hub, admin in security-tooling
     "sso.amazonaws.com",                                 # IAM Identity Center, enabled by hand
   ]
 
