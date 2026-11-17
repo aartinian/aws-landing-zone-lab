@@ -11,9 +11,11 @@ resource "aws_organizations_organization" "this" {
 
   # trusted access for services that act across the organization
   aws_service_access_principals = [
+    "access-analyzer.amazonaws.com",                     # IAM Access Analyzer (live/security)
     "account.amazonaws.com",                             # enable Regions in member accounts
     "cloudtrail.amazonaws.com",                          # organization trail (live/logging)
     "guardduty.amazonaws.com",                           # GuardDuty, admin in security-tooling
+    "iam.amazonaws.com",                                 # centralized root access (root-access.tf)
     "member.org.stacksets.cloudformation.amazonaws.com", # StackSets, activated by hand
     "securityhub.amazonaws.com",                         # Security Hub, admin in security-tooling
     "sso.amazonaws.com",                                 # IAM Identity Center, enabled by hand
