@@ -12,6 +12,13 @@ resource "aws_iam_service_linked_role" "access_analyzer" {
   aws_service_name = "access-analyzer.amazonaws.com"
 }
 
+# IAM is eventually consistent: CreateAnalyzer right after the role failed with the same error
+resource "time_sleep" "access_analyzer_role" {
+  create_duration = "30s"
+
+  depends_on = [aws_iam_service_linked_role.access_analyzer]
+}
+
 resource "aws_accessanalyzer_analyzer" "organization" {
   provider = aws.security_tooling
 
@@ -20,6 +27,6 @@ resource "aws_accessanalyzer_analyzer" "organization" {
 
   depends_on = [
     aws_organizations_delegated_administrator.access_analyzer,
-    aws_iam_service_linked_role.access_analyzer,
+    time_sleep.access_analyzer_role,
   ]
 }
