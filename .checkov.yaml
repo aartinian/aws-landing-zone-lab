@@ -1,0 +1,44 @@
+# Checkov: security checks for Terraform and GitHub Actions, run in the pipeline (lint job)
+# and locally: checkov --config-file .checkov.yaml
+#
+# skip-check is the register of accepted risks for this lab: each entry is a deliberate
+# decision with its reason. Resource-specific exceptions are inline (checkov:skip=...).
+directory: [.]
+framework: [terraform, github_actions]
+skip-path: [.terraform]
+compact: true
+quiet: true
+
+skip-check:
+  # data residency: replication would copy data out of Switzerland (only Zurich is allowed)
+  - CKV_AWS_144
+  # encryption with customer managed KMS keys: SSE-S3 / AWS owned keys keep the lab free
+  # (1 USD/month per key). Security Hub flags it too (CloudTrail.2), follow-up in A2.
+  - CKV_AWS_145 # S3 buckets
+  - CKV_AWS_35  # CloudTrail
+  - CKV_AWS_158 # CloudWatch log groups
+  - CKV_AWS_173 # Lambda environment variables (no secrets in them)
+  - CKV_AWS_297 # EventBridge Scheduler
+  # S3 access logging: object access is visible through CloudTrail; a log bucket per bucket
+  # would add cost and noise
+  - CKV_AWS_18
+  # S3 event notifications: no consumers for bucket events
+  - CKV2_AWS_62
+  # CloudTrail to CloudWatch Logs / SNS: alerts come from EventBridge rules (A2, A4);
+  # CloudWatch Logs ingestion would cost per GB
+  - CKV2_AWS_10
+  - CKV_AWS_252
+  # AWS Config records everything except AWS::Config::ResourceCompliance (cost: every
+  # control result would be a paid configuration item)
+  - CKV2_AWS_45
+  - CKV2_AWS_48
+  # log retention 14 days for the workload logs: no compliance need for 1 year in a lab
+  - CKV_AWS_338
+  # Lambda without VPC: it only calls a public API; a VPC would need a NAT gateway (cost)
+  - CKV_AWS_117
+  # Lambda reserved concurrency: new accounts have a quota of 10, which must stay unreserved
+  - CKV_AWS_115
+  # Lambda dead letter queue: EventBridge Scheduler retries, failures show in the logs (A2)
+  - CKV_AWS_116
+  # Lambda code signing: integrity comes from the pipeline (PR review, OIDC, approval)
+  - CKV_AWS_272
