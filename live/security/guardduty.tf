@@ -38,6 +38,7 @@ locals {
 # the management account must enable GuardDuty itself before it can be added as a member;
 # the other accounts get their detector from the administrator
 resource "aws_guardduty_detector" "management" {
+  # checkov:skip=CKV2_AWS_3: the organization configuration is on the admin detector
   enable = true
 }
 
@@ -57,8 +58,9 @@ resource "aws_guardduty_member" "this" {
   ]
 
   lifecycle {
-    # the provider reads an enabled organization member as invite = true: no permanent diff
-    ignore_changes = [invite]
+    # GuardDuty does not return the email of organization members and the provider reads an
+    # enabled member as invite = true: without this, every plan replaces the members
+    ignore_changes = [email, invite]
   }
 }
 
