@@ -42,6 +42,14 @@ resource "aws_guardduty_detector" "management" {
   enable = true
 }
 
+# GuardDuty needs a moment to see the new detector: without the wait, CreateMembers for the
+# management account failed right after the detector was created
+resource "time_sleep" "management_detector" {
+  create_duration = "30s"
+
+  depends_on = [aws_guardduty_detector.management]
+}
+
 # existing organization accounts: CreateMembers without an invitation, then auto-enable applies
 resource "aws_guardduty_member" "this" {
   for_each = local.guardduty_members
@@ -54,7 +62,7 @@ resource "aws_guardduty_member" "this" {
 
   depends_on = [
     aws_guardduty_organization_configuration.this,
-    aws_guardduty_detector.management,
+    time_sleep.management_detector,
   ]
 
   lifecycle {
