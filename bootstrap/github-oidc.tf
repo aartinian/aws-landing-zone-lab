@@ -94,6 +94,8 @@ resource "aws_iam_role" "apply" {
 }
 
 resource "aws_iam_role_policy_attachment" "apply_admin" {
+  # the apply role deploys everything; usable only from the "prod" environment with approval
+  # checkov:skip=CKV_AWS_274: admin by design, scoped by the OIDC trust
   role       = aws_iam_role.apply.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
