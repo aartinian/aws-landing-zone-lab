@@ -9,3 +9,9 @@ variable "member_role_name" {
   type        = string
   default     = "OrganizationAccountAccessRole"
 }
+
+variable "account_email_base" {
+  description = "Base email, e.g. you@example.com. Alerts go to you+aws-alerts@example.com."
+  type        = string
+  sensitive   = true
+}
