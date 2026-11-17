@@ -46,7 +46,7 @@ Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev 
 ## Conventions
 
 - Region `eu-central-2` only. Exception: the Well-Architected Tool (not available in Zurich) runs in eu-central-1.
-- Required tags: `project`, `env`, `owner`, `data-classification`, `managed-by`.
+- Required tags: `project`, `env`, `owner`, `data-classification`, `managed-by`. Allowed values for `env`, `owner` and `data-classification` are in [`live/organization/tagging.yaml`](live/organization/tagging.yaml), enforced by the tag policy in `live/guardrails`.
 - No account IDs, emails or state in Git: real values live in git-ignored `*.tfvars` / `backend.hcl` and in GitHub secrets.
 - Costs: target < 5 USD/month; budget alert from day one.
 
