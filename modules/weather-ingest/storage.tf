@@ -7,6 +7,7 @@ locals {
 }
 
 resource "aws_s3_bucket" "data" {
+  # checkov:skip=CKV_AWS_21: public open data, can be downloaded again
   bucket        = local.bucket_name
   force_destroy = var.force_destroy
 }

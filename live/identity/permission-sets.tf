@@ -48,6 +48,7 @@ resource "aws_ssoadmin_permission_set" "this" {
 }
 
 resource "aws_ssoadmin_managed_policy_attachment" "this" {
+  # checkov:skip=CKV_AWS_274: AdministratorAccess only for the Platform group, 1 hour sessions
   for_each = local.permission_sets
 
   instance_arn       = local.instance_arn
