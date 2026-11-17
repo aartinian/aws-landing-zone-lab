@@ -16,17 +16,26 @@ data "aws_iam_policy_document" "baseline" {
     resources = ["*"]
   }
 
-  # the bucket policy actions stay open to unlock a bucket with a broken policy
+  # long-term root credentials are denied. Privileged root tasks (unlock a bucket policy,
+  # delete root credentials) run as short AssumeRoot sessions from the management account,
+  # limited by an AWS task policy (live/organization/root-access.tf).
   statement {
-    sid         = "DenyRootUser"
-    effect      = "Deny"
-    not_actions = ["s3:GetBucketPolicy", "s3:PutBucketPolicy", "s3:DeleteBucketPolicy"]
-    resources   = ["*"]
+    sid       = "DenyRootUser"
+    effect    = "Deny"
+    actions   = ["*"]
+    resources = ["*"]
 
     condition {
       test     = "ArnLike"
       variable = "aws:PrincipalArn"
       values   = ["arn:aws:iam::*:root"]
+    }
+
+    # the key only exists in AssumeRoot sessions
+    condition {
+      test     = "Null"
+      variable = "aws:AssumedRoot"
+      values   = ["true"]
     }
   }
 
