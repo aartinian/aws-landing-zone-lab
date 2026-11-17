@@ -7,3 +7,8 @@ output "log_bucket_name" {
   description = "Central CloudTrail bucket in the log-archive account."
   value       = aws_s3_bucket.logs.id
 }
+
+output "config_bucket_name" {
+  description = "Central AWS Config bucket in the log-archive account."
+  value       = aws_s3_bucket.config.id
+}
