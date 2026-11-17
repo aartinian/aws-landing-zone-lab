@@ -1,8 +1,8 @@
 # terraform workflow for the root modules in live/
 #   always          -> fmt, Python lint and tests of the workloads
 #   pull request    -> fmt, validate, plan (read-only role)
-#   merge to master -> plan + apply (admin role), only after approval in
-#                      the GitHub environment "prod"
+#   merge to master -> one approval in the GitHub environment "prod", then
+#                      plan + apply (admin role) of every changed root, in order
 #
 # note: bootstrap/ is not part of the pipeline, it is applied by hand
 
@@ -177,9 +177,10 @@ jobs:
           )
           echo "**${ROOT}**: ${result:-see job log}" >> "$GITHUB_STEP_SUMMARY"
 
+  # one job and one approval for all roots: they run in order (alphabetical, so
+  # workload-dev before workload-prod), roots without changes are skipped and
+  # the first error stops the rest
   apply:
-    name: apply (${{ matrix.root }})
-    # never deploy Lambda code that fails its tests
     needs: [checks, python]
     if: github.event_name == 'push' && needs.checks.outputs.roots != '[]'
     runs-on: ubuntu-latest
@@ -188,16 +189,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    strategy:
-      fail-fast: true
-      max-parallel: 1
-      matrix:
-        root: ${{ fromJSON(needs.checks.outputs.roots) }}
-    # job defaults replace the workflow defaults, so repeat the shell (pipefail)
-    defaults:
-      run:
-        shell: bash
-        working-directory: ${{ matrix.root }}
     env:
       TF_VAR_account_email_base: ${{ secrets.ACCOUNT_EMAIL_BASE }}
       TF_VAR_admin_user_name: ${{ secrets.IDENTITY_ADMIN_USER_NAME }}
@@ -208,25 +199,13 @@ jobs:
 
       - uses: ./.github/actions/tf-init
         with:
-          root: ${{ matrix.root }}
           role-arn: ${{ secrets.AWS_APPLY_ROLE_ARN }}
           state-bucket: ${{ secrets.TF_STATE_BUCKET }}
 
-      - name: terraform plan
-        run: |
-          terraform plan -no-color -lock-timeout=2m -out=tfplan \
-            | sed -E \
-                -e 's/[0-9]{12}/<account-id>/g' \
-                -e 's/ou-[a-z0-9]{4,32}-[a-z0-9]{8,32}/<ou-id>/g'
-
-      - name: terraform apply
-        run: |
-          terraform apply -no-color -lock-timeout=2m tfplan \
-            | sed -E \
-                -e 's/[0-9]{12}/<account-id>/g' \
-                -e 's/ou-[a-z0-9]{4,32}-[a-z0-9]{8,32}/<ou-id>/g'
-
-      - name: Summary
+      - name: Plan and apply each root
         env:
-          ROOT: ${{ matrix.root }}
-        run: echo "**${ROOT}**, applied" >> "$GITHUB_STEP_SUMMARY"
+          ROOTS: ${{ needs.checks.outputs.roots }}
+          STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+        run: |
+          mapfile -t roots < <(jq -r '.[]' <<< "${ROOTS}")
+          .github/scripts/apply-roots.sh "${roots[@]}"
