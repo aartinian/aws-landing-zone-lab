@@ -35,10 +35,13 @@ env:
   TF_IN_AUTOMATION: "true"
   TF_INPUT: "false"
   TFLINT_VERSION: v0.66.0
+<<<<<<< HEAD
   # the provider reads the required tags from the organization tag policy and fails plan and
   # apply if a resource misses one (live/guardrails/tag-policy.tf). Plan and apply roles
   # need tag:ListRequiredTags.
   TF_AWS_TAG_POLICY_COMPLIANCE: error
+=======
+>>>>>>> master
 
 jobs:
   checks:
@@ -228,6 +231,10 @@ jobs:
     env:
       TF_VAR_account_email_base: ${{ secrets.ACCOUNT_EMAIL_BASE }}
       TF_VAR_admin_user_name: ${{ secrets.IDENTITY_ADMIN_USER_NAME }}
+      # the provider reads the required tags from the organization tag policy and fails if a
+      # resource misses one (live/guardrails/tag-policy.tf). Plans follow once the plan roles
+      # have tag:ListRequiredTags (bootstrap + member plan role StackSet).
+      TF_AWS_TAG_POLICY_COMPLIANCE: error
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
