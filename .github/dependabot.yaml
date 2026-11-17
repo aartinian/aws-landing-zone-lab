@@ -1,4 +1,4 @@
-# keeps the SHA-pinned actions and the Python dev tools up to date (weekly pull requests)
+# keeps the SHA-pinned actions, the Python dev tools and Checkov up to date (weekly PRs)
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -9,5 +9,11 @@ updates:
   # pyproject.toml and uv.lock of the Lambda
   - package-ecosystem: uv
     directory: /workloads/weather-ingest
+    schedule:
+      interval: weekly
+
+  # Checkov version for the lint job
+  - package-ecosystem: pip
+    directory: /.github/lint
     schedule:
       interval: weekly
