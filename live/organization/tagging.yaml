@@ -1,0 +1,15 @@
+# tag standard: keys, allowed values and the resource types that must carry them.
+# Read by the tag policy (live/guardrails/tag-policy.tf) and the vending checks (accounts.tf).
+
+# resource types the policy checks (required + allowed values), all support enforcement
+resource_types:
+  - s3:bucket
+  - lambda:function
+  - logs:log-group
+  - cloudtrail:trail
+
+# tag key -> allowed values
+tags:
+  data-classification: [public, internal, confidential] # ISG classification
+  env: [dev, prod, management]
+  owner: [platform, weather-data]

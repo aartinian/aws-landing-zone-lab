@@ -2,7 +2,7 @@
 #   ou:                  Security | Workloads | Sandbox | Suspended
 #   owner:               team responsible for the account
 #   env:                 dev | prod
-#   data-classification: public | internal | confidential (ISG)
+#   data-classification: public | internal | confidential (ISG, see tagging.yaml)
 
 log-archive:
   ou: Security
