@@ -38,6 +38,13 @@ data "aws_iam_policy_document" "function" {
     resources = ["${aws_cloudwatch_log_group.function.arn}:*"]
   }
 
+  # X-Ray does not support resource-level permissions
+  statement {
+    sid       = "WriteTraces"
+    actions   = ["xray:PutTraceSegments", "xray:PutTelemetryRecords"]
+    resources = ["*"]
+  }
+
   statement {
     sid       = "StoreFiles"
     actions   = ["s3:PutObject"]
@@ -68,6 +75,11 @@ resource "aws_lambda_function" "this" {
       BUCKET   = aws_s3_bucket.data.id
       STATIONS = join(",", var.stations)
     }
+  }
+
+  # traces show the time spent in the STAC API vs. S3 (free tier: 100k traces/month)
+  tracing_config {
+    mode = "Active"
   }
 
   logging_config {
