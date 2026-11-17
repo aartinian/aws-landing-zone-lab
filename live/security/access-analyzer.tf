@@ -7,11 +7,19 @@ resource "aws_organizations_delegated_administrator" "access_analyzer" {
   service_principal = "access-analyzer.amazonaws.com"
 }
 
+# an organization analyzer needs the service-linked role in the management account as well
+resource "aws_iam_service_linked_role" "access_analyzer" {
+  aws_service_name = "access-analyzer.amazonaws.com"
+}
+
 resource "aws_accessanalyzer_analyzer" "organization" {
   provider = aws.security_tooling
 
   analyzer_name = "organization"
   type          = "ORGANIZATION"
 
-  depends_on = [aws_organizations_delegated_administrator.access_analyzer]
+  depends_on = [
+    aws_organizations_delegated_administrator.access_analyzer,
+    aws_iam_service_linked_role.access_analyzer,
+  ]
 }
