@@ -1,2 +1,2 @@
 # Checkov for the lint job (Dependabot keeps it current)
-checkov==3.4.5
+checkov==3.4.6
