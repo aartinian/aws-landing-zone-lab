@@ -1,6 +1,6 @@
 # terraform workflow for the root modules in live/
 #   always          -> fmt, tflint, Checkov, Python lint and tests of the workloads
-#   pull request    -> fmt, validate, plan (read-only role)
+#   pull request    -> fmt, validate, plan (read-only role), one required check "ci"
 #   merge to master -> one approval in the GitHub environment "prod", then
 #                      plan + apply (admin role) of every changed root, in order
 #
@@ -133,33 +133,11 @@ jobs:
       - name: pytest
         run: uv run --locked pytest -q
 
-  # proves on every pull request that GitHub can assume the plan role,
-  # even when there is no root module to plan yet. Dependabot PRs get no secrets and
-  # no AWS access on purpose: skipped jobs count as passed, the apply after merge plans again.
-  oidc:
-    if: >-
-      github.event_name == 'pull_request'
-      && github.event.pull_request.head.repo.full_name == github.repository
-      && github.actor != 'dependabot[bot]'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
-        with:
-          role-to-assume: ${{ secrets.AWS_PLAN_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-          role-session-name: gha-${{ github.run_id }}
-          mask-aws-account-id: true
-
-      - name: Who am I
-        run: aws sts get-caller-identity --query Arn --output text
-
   plan:
     name: plan (${{ matrix.root }})
     needs: checks
-    # fork and Dependabot PRs get no OIDC token or secrets, skip instead of failing
+    # fork and Dependabot PRs get no OIDC token or secrets: skip instead of failing,
+    # the apply after merge plans again
     if: >-
       github.event_name == 'pull_request'
       && github.event.pull_request.head.repo.full_name == github.repository
@@ -217,6 +195,20 @@ jobs:
               || true
           )
           echo "**${ROOT}**: ${result:-see job log}" >> "$GITHUB_STEP_SUMMARY"
+
+  # the only required check in the ruleset: green when no job above failed (skipped is
+  # fine, e.g. plan on Dependabot PRs), so new jobs or matrix entries need no ruleset change
+  ci:
+    needs: [checks, lint, python, plan]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: All checks passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "results: ${RESULTS}"
+          [[ ! "${RESULTS}" =~ failure|cancelled ]]
 
   # one job and one approval for all roots: they run in order (alphabetical, so
   # workload-dev before workload-prod), roots without changes are skipped and
