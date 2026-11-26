@@ -22,6 +22,13 @@ module "security_tooling" {
   config_bucket_name = local.config_bucket_name
 }
 
+module "network" {
+  source    = "../../modules/security-baseline"
+  providers = { aws = aws.network }
+
+  config_bucket_name = local.config_bucket_name
+}
+
 module "workload_dev" {
   source    = "../../modules/security-baseline"
   providers = { aws = aws.workload_dev }
