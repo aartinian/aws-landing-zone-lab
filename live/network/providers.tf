@@ -26,7 +26,7 @@ provider "aws" {
   }
 }
 
-# workload-dev: participant proof only (participant.tf)
+# workload-dev: only to destroy the old ENI proof (participant.tf), remove in the next PR
 provider "aws" {
   alias  = "workload_dev"
   region = var.region

@@ -8,7 +8,11 @@ updates:
 
   # pyproject.toml and uv.lock of the Lambda and the tools
   - package-ecosystem: uv
-    directories: ["/workloads/weather-ingest", "/tools/org-inventory", "/tools/lab-tools"]
+    directories:
+      - /workloads/weather-ingest
+      - /workloads/weather-parse
+      - /tools/org-inventory
+      - /tools/lab-tools
     schedule:
       interval: weekly
 
