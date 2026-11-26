@@ -31,13 +31,9 @@ resource "aws_default_security_group" "this" {
   vpc_id = aws_vpc.this.id
 }
 
-data "aws_availability_zones" "this" {
-  provider = aws.network
-  state    = "available"
-}
-
 locals {
-  azs = slice(sort(data.aws_availability_zones.this.names), 0, 2)
+  # zone IDs, not names: the same physical AZ in every account (names are shuffled per account)
+  azs = ["euc2-az1", "euc2-az2"]
 
   # "dev-0" -> /24 in AZ a, ... (2 AZs per environment, the rest of each /22 stays free)
   subnets = merge([
@@ -58,9 +54,9 @@ resource "aws_subnet" "this" {
   for_each = local.subnets
   provider = aws.network
 
-  vpc_id            = aws_vpc.this.id
-  availability_zone = each.value.az
-  cidr_block        = each.value.cidr
+  vpc_id               = aws_vpc.this.id
+  availability_zone_id = each.value.az
+  cidr_block           = each.value.cidr
 
   # participants don't see these tags (owner-side only)
   tags = { Name = "shared-${each.key}" }
