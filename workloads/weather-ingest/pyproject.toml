@@ -5,7 +5,7 @@ description = "Daily ingest of MeteoSwiss SwissMetNet open data into S3"
 requires-python = ">=3.12"
 
 [dependency-groups]
-dev = ["pytest==9.2.0", "ruff==0.17.5"]
+dev = ["pytest==9.2.0", "ruff==0.17.6"]
 
 [tool.ruff]
 line-length = 100
