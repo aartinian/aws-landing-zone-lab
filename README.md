@@ -21,7 +21,7 @@ Organization (management account: billing, Organizations, Identity Center)
 
 Guardrails: Zurich-only region SCP (global services exempt), deny leaving the organization, deny root user (short AssumeRoot task sessions from the management account excepted), protect security services, tag policy.
 
-Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev → prod through the pipeline.
+Workloads: a small Python Lambda that ingests MeteoSwiss open data, deployed dev → prod through the pipeline; in dev a second Lambda in the shared VPC summarizes each new file (S3 → SQS → Lambda).
 
 ## Layout
 

@@ -106,7 +106,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [workloads/weather-ingest, tools/org-inventory, tools/lab-tools]
+        project: [workloads/weather-ingest, workloads/weather-parse, tools/org-inventory, tools/lab-tools]
     defaults:
       run:
         shell: bash
