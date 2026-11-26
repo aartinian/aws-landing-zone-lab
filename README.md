@@ -31,7 +31,7 @@ Workload: a small Python Lambda that ingests MeteoSwiss open data, deployed dev 
 | `modules/` | Reusable modules | in use |
 | `live/` | Root modules per component, one state key each | in use |
 | `workloads/` | Application code (Python), tested in the pipeline, deployed by `live/workload-*` | in use |
-| `tools/` | Operations tools, e.g. [`org-inventory`](#organization-inventory) (Python, tested in the pipeline) | in use |
+| `tools/` | Operations tools (Python, tested in the pipeline): [`org-inventory`](#organization-inventory), [`lab-tools`](tools/lab-tools/README.md) (accounts, subnets, untagged, findings) | in use |
 | `.github/` | Pipeline: plan on PR, apply on merge with approval | ready |
 
 ## Pipeline
