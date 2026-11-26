@@ -25,19 +25,3 @@ provider "aws" {
     tags = merge(local.common_tags, local.account_tags["network"])
   }
 }
-
-# workload-dev: only to destroy the old ENI proof (participant.tf), remove in the next PR
-# tflint-ignore: terraform_unused_declarations
-provider "aws" {
-  alias  = "workload_dev"
-  region = var.region
-
-  assume_role {
-    role_arn     = local.role_arns["workload-dev"]
-    session_name = "terraform-network"
-  }
-
-  default_tags {
-    tags = merge(local.common_tags, local.account_tags["workload-dev"])
-  }
-}
