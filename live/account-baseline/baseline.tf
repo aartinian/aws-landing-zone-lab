@@ -14,6 +14,13 @@ module "security_tooling" {
   budget_emails = local.budget_emails
 }
 
+module "network" {
+  source        = "../../modules/account-baseline"
+  providers     = { aws = aws.network }
+  account_name  = "network"
+  budget_emails = local.budget_emails
+}
+
 module "workload_dev" {
   source        = "../../modules/account-baseline"
   providers     = { aws = aws.workload_dev }

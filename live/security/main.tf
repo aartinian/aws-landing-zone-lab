@@ -34,7 +34,7 @@ locals {
   config_bucket_name = "awslab-config-${local.account_ids["log-archive"]}-${var.region}"
 
   # keep in sync with the module calls in baseline.tf
-  baselined = ["log-archive", "security-tooling", "workload-dev", "workload-prod"]
+  baselined = ["log-archive", "security-tooling", "network", "workload-dev", "workload-prod"]
   missing   = setsubtract(keys(local.vending), local.baselined)
 }
 

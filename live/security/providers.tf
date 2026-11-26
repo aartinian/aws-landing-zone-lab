@@ -43,6 +43,20 @@ provider "aws" {
 }
 
 provider "aws" {
+  alias  = "network"
+  region = var.region
+
+  assume_role {
+    role_arn     = local.role_arns["network"]
+    session_name = "terraform-security"
+  }
+
+  default_tags {
+    tags = merge(local.common_tags, local.account_tags["network"])
+  }
+}
+
+provider "aws" {
   alias  = "workload_dev"
   region = var.region
 

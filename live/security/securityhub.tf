@@ -26,6 +26,7 @@ locals {
   securityhub_members = {
     management    = local.management_id
     log-archive   = local.account_ids["log-archive"]
+    network       = local.account_ids["network"]
     workload-dev  = local.account_ids["workload-dev"]
     workload-prod = local.account_ids["workload-prod"]
   }
@@ -43,6 +44,7 @@ resource "aws_securityhub_member" "this" {
     aws_securityhub_organization_configuration.this,
     module.management,
     module.log_archive,
+    module.network,
     module.workload_dev,
     module.workload_prod,
   ]
