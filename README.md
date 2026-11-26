@@ -10,9 +10,11 @@ Organization (management account: billing, Organizations, Identity Center)
 │   ├── log-archive        org CloudTrail, Config, access logs
 │   └── security-tooling   delegated admin: GuardDuty, Security Hub, IAM Access Analyzer;
 │                          high-severity findings by email
+├── Infrastructure OU
+│   └── network            IPAM (delegated admin), shared VPC: subnets shared through RAM
 ├── Workloads OU
-│   ├── workload-dev
-│   └── workload-prod
+│   ├── workload-dev       uses the shared dev subnets
+│   └── workload-prod      uses the shared prod subnets
 ├── Sandbox OU             empty; used to test SCPs
 └── Suspended OU           empty; quarantine for closed accounts
 ```

@@ -82,3 +82,14 @@ resource "aws_cloudformation_stack_set_instance" "member_plan_role" {
     ]
   }
 }
+
+# separate instance for OUs added later: changing the OU list above would replace that
+# instance, which deletes and recreates the plan role in every existing account
+resource "aws_cloudformation_stack_set_instance" "member_plan_role_infrastructure" {
+  stack_set_name            = aws_cloudformation_stack_set.member_plan_role.name
+  stack_set_instance_region = var.region
+
+  deployment_targets {
+    organizational_unit_ids = [aws_organizations_organizational_unit.this["Infrastructure"].id]
+  }
+}
