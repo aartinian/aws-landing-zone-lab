@@ -45,12 +45,13 @@ def _ou_name(org, account_id: str) -> str:
 def _member_status(admin: boto3.Session) -> tuple[dict[str, str], dict[str, str]]:
     """GuardDuty and Security Hub membership as seen by the delegated admin."""
     guardduty = admin.client("guardduty")
-    detector = guardduty.list_detectors()["DetectorIds"][0]
     gd: dict[str, str] = {}
-    for page in guardduty.get_paginator("list_members").paginate(
-        DetectorId=detector, OnlyAssociated="false"
-    ):
-        gd |= {m["AccountId"]: m["RelationshipStatus"] for m in page["Members"]}
+    # no detector in the admin (e.g. GuardDuty disabled): no members, every account fails the check
+    for detector in guardduty.list_detectors()["DetectorIds"][:1]:
+        for page in guardduty.get_paginator("list_members").paginate(
+            DetectorId=detector, OnlyAssociated="false"
+        ):
+            gd |= {m["AccountId"]: m["RelationshipStatus"] for m in page["Members"]}
 
     sh: dict[str, str] = {}
     for page in (
