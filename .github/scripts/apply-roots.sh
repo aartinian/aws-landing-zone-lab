@@ -8,6 +8,9 @@ set -euo pipefail
 
 : "${STATE_BUCKET:?STATE_BUCKET is not set}"
 summary="${GITHUB_STEP_SUMMARY:-/dev/null}"
+# download each provider once, the next roots link it from the cache (the lock files hold the
+# linux_amd64 checksum, so Terraform trusts the cached copy)
+export TF_PLUGIN_CACHE_DIR="${TF_PLUGIN_CACHE_DIR:-$(mktemp -d)}"
 
 # new IDs are not known to the masking step: hide all account and OU IDs by pattern
 mask() {
