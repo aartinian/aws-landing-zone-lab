@@ -4,6 +4,7 @@ Root modules, one state key each (`<component>/terraform.tfstate` in the bootstr
 
 | Component | Account | Content |
 |---|---|---|
+| `network` | network + workload-dev | IPAM (Advanced tier, delegated admin): top pool 10.0.0.0/8 → nonprod and prod pools (Zurich). One shared VPC, private only: dev subnets from nonprod, prod subnets from a secondary CIDR from prod, shared through RAM to workload-dev / workload-prod. Proof: security group + ENI owned by workload-dev in a shared subnet |
 | `organization` | management | Organization (imported), OUs, accounts from `accounts.yaml` (tags, Zurich), member plan role via StackSet |
 | `account-baseline` | each member account | `modules/account-baseline` per account: Block Public Access, EBS encryption, budget |
 | `guardrails` | management | SCPs: baseline + Region restriction (root), deny-all (Suspended). Tag policy `tag-standard` (root) from `organization/tagging.yaml`: required tags + allowed values for S3 buckets, Lambda functions, log groups, the trail |
