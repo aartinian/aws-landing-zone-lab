@@ -15,8 +15,10 @@ resource "aws_organizations_organization" "this" {
     "account.amazonaws.com",                             # enable Regions in member accounts
     "cloudtrail.amazonaws.com",                          # organization trail (live/logging)
     "guardduty.amazonaws.com",                           # GuardDuty, admin in security-tooling
+    "ipam.amazonaws.com",                                # VPC IPAM, admin in network (network.tf)
     "iam.amazonaws.com",                                 # centralized root access (root-access.tf)
     "member.org.stacksets.cloudformation.amazonaws.com", # StackSets, activated by hand
+    "ram.amazonaws.com",                                 # RAM sharing in the organization
     "securityhub.amazonaws.com",                         # Security Hub, admin in security-tooling
     "sso.amazonaws.com",                                 # IAM Identity Center, enabled by hand
   ]
@@ -31,7 +33,7 @@ locals {
   root_id = aws_organizations_organization.this.roots[0].id
 
   # Sandbox and Suspended stay empty: one to test SCPs, one to park accounts before closing
-  ous = toset(["Security", "Workloads", "Sandbox", "Suspended"])
+  ous = toset(["Security", "Infrastructure", "Workloads", "Sandbox", "Suspended"])
 }
 
 resource "aws_organizations_organizational_unit" "this" {

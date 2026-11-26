@@ -1,5 +1,5 @@
 # account vending: one entry per member account
-#   ou:                  Security | Workloads | Sandbox | Suspended
+#   ou:                  Security | Infrastructure | Workloads | Sandbox | Suspended
 #   owner:               team responsible for the account
 #   env:                 dev | prod
 #   data-classification: public | internal | confidential (ISG, see tagging.yaml)
@@ -12,6 +12,12 @@ log-archive:
 
 security-tooling:
   ou: Security
+  owner: platform
+  env: prod
+  data-classification: internal
+
+network:
+  ou: Infrastructure
   owner: platform
   env: prod
   data-classification: internal
