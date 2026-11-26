@@ -27,6 +27,7 @@ provider "aws" {
 }
 
 # workload-dev: only to destroy the old ENI proof (participant.tf), remove in the next PR
+# tflint-ignore: terraform_unused_declarations
 provider "aws" {
   alias  = "workload_dev"
   region = var.region
