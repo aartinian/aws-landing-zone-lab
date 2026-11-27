@@ -128,5 +128,6 @@ def test_report_lists_failures_first_with_summary():
     findings = [Finding("a", "ou", True, "Workloads"), Finding("b", "budget", False, "0")]
     report = render_markdown(findings)
     rows = report.splitlines()
-    assert rows[2] == "| b | budget | FAIL | 0 |"
+    assert [c.strip() for c in rows[2].split("|")[1:-1]] == ["b", "budget", "FAIL", "0"]
+    assert len({len(row) for row in rows[:4]}) == 1  # columns aligned
     assert rows[-1] == "1 ok, 1 failed"

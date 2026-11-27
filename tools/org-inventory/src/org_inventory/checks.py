@@ -104,9 +104,17 @@ def check_organization(
 def render_markdown(findings: list[Finding]) -> str:
     """Report for a terminal or a GitHub job summary: failures first, then a short summary."""
     failed = [f for f in findings if not f.ok]
-    lines = ["| Account | Check | Result | Detail |", "|---|---|---|---|"]
-    for f in sorted(findings, key=lambda f: (f.ok, f.account, f.check)):
-        lines.append(f"| {f.account} | {f.check} | {'ok' if f.ok else 'FAIL'} | {f.detail} |")
+    rows = [("Account", "Check", "Result", "Detail")] + [
+        (f.account, f.check, "ok" if f.ok else "FAIL", str(f.detail))
+        for f in sorted(findings, key=lambda f: (f.ok, f.account, f.check))
+    ]
+    # padded columns: aligned in a terminal, still a valid Markdown table
+    widths = [max(len(row[i]) for row in rows) for i in range(4)]
+    lines = [
+        "| " + " | ".join(c.ljust(w) for c, w in zip(row, widths, strict=True)) + " |"
+        for row in rows
+    ]
+    lines.insert(1, "|" + "|".join("-" * (w + 2) for w in widths) + "|")
     lines.append("")
     lines.append(f"{len(findings) - len(failed)} ok, {len(failed)} failed")
     return "\n".join(lines) + "\n"

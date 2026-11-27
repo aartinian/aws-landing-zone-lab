@@ -89,18 +89,34 @@ Planned next steps, with the design decided:
 
 ## Teardown
 
-Reverse order of creation. Filled in as components are added.
+The pipeline applies every directory in `live/`: a root destroyed by hand comes back on the
+next apply unless its directory is removed in the same step.
 
-1. Workloads: `terraform destroy` per `live/` component (prod, then dev).
-2. Security services (`live/security`): `terraform destroy` disables Security Hub, Config, IAM Access Analyzer, the alert topic and the GuardDuty admin. Member detectors created by GuardDuty auto-enable stay: delete them in each member account (`aws guardduty delete-detector`), they are not in the state (the management detector is).
-3. Organization CloudTrail and log buckets (`live/logging`):
+### Only the paid part (IPAM Advanced bills per active IP and hour)
+
+1. PR: remove `module "weather_parse"`, the shared-subnet data sources and the parse outputs from
+   `live/workload-dev`. The apply destroys the Lambda; Lambda deletes its network interfaces in
+   the shared subnets, which can take up to 20 minutes.
+2. By hand, with the apply credentials: `terraform -chdir=live/network destroy` (IPAM with its
+   pools, VPC, subnets, RAM shares, S3 endpoint).
+3. PR: delete `live/network/`, so the pipeline doesn't create it again. The `network` account and
+   the IPAM delegated admin stay (free).
+
+### Everything, reverse order of creation
+
+1. Workloads: `live/workload-prod`, then `live/workload-dev`. The prod data bucket has
+   `force_destroy = false`: empty it first (all versions). weather-parse first, see above.
+2. Network: `live/network` (as above).
+3. Account baseline: `live/account-baseline` (budgets, S3 public access block, ...).
+4. Identity Center assignments and permission sets (`live/identity`).
+5. Security services (`live/security`): `terraform destroy` disables Security Hub, Config, IAM Access Analyzer, the alert topic and the GuardDuty admin. Member detectors created by GuardDuty stay: delete them in each member account (`aws guardduty delete-detector`), they are not in the state (the management detector is).
+6. Organization CloudTrail and log buckets (`live/logging`):
    - Destroy the trail first, so no new log files arrive.
    - The Config bucket has `prevent_destroy`: empty it (all versions), remove the flag, destroy.
    - The log bucket has Object Lock (governance) and `prevent_destroy`. Either wait until the last lock expires (30 days), or delete all object versions as admin with `--bypass-governance-retention`. Then remove `prevent_destroy` and destroy the bucket.
-4. Identity Center assignments and permission sets.
-5. SCPs and tag policies (detach, then delete). Centralized root access: destroy `aws_iam_organizations_features` before the trusted access for IAM is removed.
-6. Member accounts: close via Organizations (90-day post-closure period; they count against the account quota until then).
-7. Bootstrap:
+7. SCPs and tag policies (`live/guardrails`: detach, then delete).
+8. Organization (`live/organization`): centralized root access first (destroy `aws_iam_organizations_features` before the trusted access for IAM is removed). Member accounts: remove `prevent_destroy`, close via Organizations (90-day post-closure period; they count against the account quota until then).
+9. Bootstrap:
    - Empty the state bucket, **including all object versions and delete markers**.
    - Remove `prevent_destroy` from `aws_s3_bucket.state`, migrate state back to local (`terraform init -migrate-state` with the backend block commented out), then `terraform destroy`.
-8. Check Cost Explorer and the Billing console the next day for leftovers.
+10. Check Cost Explorer and the Billing console the next day for leftovers.
